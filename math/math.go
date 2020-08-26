@@ -23,6 +23,11 @@ func mult(x int, y int) int {
 	return return_mult_value
 }
 
+func modulo(x float32, y float32) float32 {
+	var return_modulo_value float64 = x % y
+	return return_modulo_value
+}
+
 func div(x int, y int) int {
 	var return_div_value int = x / y
 	return return_div_value
@@ -38,4 +43,6 @@ func main() {
 	fmt.Println(div_result)
 	var sub_result int = sub(100, 50)
 	fmt.Println(sub_result)
+	var modulo_result float32 = modulo(25, 3)
+	fmt.Println(modulo_result)
 }
