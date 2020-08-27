@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
 	csvFilename := flag.String("csv", "problems.csv", "a csv file in the format of 'question,answer'")
+	timeLimit := flag.Int("limit", 30, "the time limit for the quiz in seconds")
 	flag.Parse()
 	// Pointer to a string
 	file, err := os.Open(*csvFilename)
@@ -27,26 +29,42 @@ func main() {
 
 	problems := parseLines(lines)
 
+	// Using time package
+	// If timeLimit = 30 time * 30second
+	time := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+	// Getting a time message on a channel
+	// We want code to move forward and not wait for message from time channel
+
 	correct := 0
 	// i = index p = problem
 	for i, p := range problems {
-		// Start at problem 1
+
 		fmt.Printf("Problem #%d: %s = ", i+1, p.question)
-		// Read in answer
-		var answer string
-		// Scanf will get rid of trailing spaces, etc
-		// This is fine for this game
-		fmt.Scanf("%s\n", &answer)
-		if answer == p.answer {
-			// Increment correct counter
-			correct++
+		answerChannel := make(chan string)
+
+		go func() {
+			var answer string
+			fmt.Scanf("%s\n", &answer)
+			// Send the answer to the answer channel so it can be used outside the go
+			// routine
+			answerChannel <- answer
+		}()
+
+		select {
+
+		case <-time.C:
+			fmt.Printf("\nYou scored %d out of %d.\n", correct, len(problems))
+			var percentage float64 = (float64(correct) / float64(len(problems))) * 100
+			fmt.Printf("Grade: %.2f%%\n", percentage)
+			return
+
+		case answer := <-answerChannel:
+			if answer == p.answer {
+				// Increment correct counter
+				correct++
+			}
 		}
 	}
-
-	// Potential edge cases to consider?
-	fmt.Printf("You scored %d out of %d.\n", correct, len(problems))
-	var percentage float64 = (float64(correct) / float64(len(problems))) * 100
-	fmt.Printf("Grade: %.2f%%\n", percentage)
 }
 
 func parseLines(lines [][]string) []problem {
